@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartSupport - AI Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* User Message */
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .user-message .message-content {
+            background: #667eea;
+            color: white;
+            max-width: 65%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Bot Message */
+        .bot-message {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .bot-message-wrapper {
+            flex: 1;
+            max-width: 65%;
+        }
+
+        .bot-message .message-content {
+            background: white;
+            color: #333;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Sources */
+        .sources-wrapper {
+            flex: 1;
+            max-width: 32%;
+        }
+
+        .sources {
+            padding: 12px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .sources-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .source-item {
+            margin: 8px 0;
+            color: #555;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 2px solid #667eea;
+        }
+
+        .source-file {
+            font-weight: 600;
+            color: #667eea;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .source-similarity {
+            font-size: 11px;
+            color: #999;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .source-excerpt {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: bounce 1.4s infinite;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Error Message */
+        .error-message {
+            background: #ffe0e0;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 3px solid #c33;
+            font-size: 13px;
+        }
+
+        /* Input Area */
+        .input-area {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        #question-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #question-input:focus {
+            border-color: #667eea;
+        }
+
+        #send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #send-btn:active {
+            transform: translateY(0);
+        }
+
+        #send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mode Badge */
+        .mode-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .mode-generative {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .mode-extractive {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .mode-not_related {
+            background: #f8d7ea;
+            color: #721c24;
+        }
+
+        .mode-extractive_fallback {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Scrollbar */
+        .chat-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .bot-message-wrapper {
+                max-width: 100%;
+            }
+
+            .sources-wrapper {
+                max-width: 100%;
+            }
+
+            .bot-message {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .user-message .message-content,
+            .bot-message .message-content {
+                max-width: 100%;
+            }
+
+            .bot-message-wrapper {
+                max-width: 100%;
+            }
+
+            .sources-wrapper {
+                max-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            #question-input {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .sources {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            .source-item {
+                padding: 6px;
+                margin: 6px 0;
+            }
+        }
+
+        .emoji {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><span class="emoji">📚</span>SmartSupport</h1>
+            <p>AI-Powered Support Q&A with Semantic Search</p>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area" id="chat-area">
+            <div class="message bot-message">
+                <div>
+                    <div class="message-content">
+                        👋 Welcome to SmartSupport! I'm your AI assistant powered by Gemini and semantic search.
+                        <br><br>
+                        📝 Ask me anything about the documents that have been uploaded.
+                        <br><br>
+                        💡 I'll search through the knowledge base and provide grounded answers with sources.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="question-input" 
+                    placeholder="Ask a question about your documents..." 
+                    autocomplete="off"
+                >
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const chatArea = document.getElementById('chat-area');
+        const questionInput = document.getElementById('question-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Send message on Enter key
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Send message on button click
+        sendBtn.addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            const question = questionInput.value.trim();
+            
+            if (!question) return;
+
+            // Add user message to chat
+            addMessage(question, 'user');
+            questionInput.value = '';
+            sendBtn.disabled = true;
+
+            // Show loading indicator
+            const loadingId = showLoading();
+
+            try {
+                // Call API
+                const response = await fetch(`${API_BASE}/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        top_k: 5
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Remove loading indicator
+                removeMessage(loadingId);
+
+                // Add bot response
+                addMessage(result.answer, 'bot', result);
+
+            } catch (error) {
+                removeMessage(loadingId);
+                addMessage(`Error: ${error.message}. Make sure the API server is running on http://localhost:8000`, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                questionInput.focus();
+            }
+        }
+
+        function addMessage(text, type, data = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+
+            if (type === 'bot' && data && data.sources && data.sources.length > 0) {
+                // Create wrapper for message + sources side by side
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = 'bot-message-wrapper';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = text;
+
+                // Add mode badge if available
+                if (data.mode) {
+                    const modeDiv = document.createElement('div');
+                    modeDiv.className = `mode-badge mode-${data.mode}`;
+                    
+                    // Format mode text nicely
+                    const modeText = data.mode
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    
+                    modeDiv.textContent = `${modeText} MODE`;
+                    contentDiv.appendChild(document.createElement('br'));
+                    contentDiv.appendChild(modeDiv);
+                }
+
+                messageWrapper.appendChild(contentDiv);
+
+                // Create sources wrapper
+                const sourcesWrapper = document.createElement('div');
+                sourcesWrapper.className = 'sources-wrapper';
+
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'sources';
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'sources-title';
+                titleDiv.innerHTML = '📚 Sources';
+                sourcesDiv.appendChild(titleDiv);
+
+                data.sources.forEach((source) => {
+                    const sourceItem = document.createElement('div');
+                    sourceItem.className = 'source-item';
+                    
+                    const fileSpan = document.createElement('span');
+                    fileSpan.className = 'source-file';
+                    fileSpan.textContent = source.filename;
+                    
+                    const simSpan = document.createElement('span');
+                    simSpan.className = 'source-similarity';
+                    simSpan.textContent = `Similarity: ${source.similarity.toFixed(2)} (${(source.similarity*100).toFixed(1)}%)`;
+                    
+                    const excerptSpan = document.createElement('div');
+                    excerptSpan.className = 'source-excerpt';
+                    excerptSpan.textContent = source.excerpt.substring(0, 100) + '...';
+                    
+                    sourceItem.appendChild(fileSpan);
+                    sourceItem.appendChild(simSpan);
+                    sourceItem.appendChild(excerptSpan);
+                    sourcesDiv.appendChild(sourceItem);
+                });
+
+                sourcesWrapper.appendChild(sourcesDiv);
+
+                messageDiv.appendChild(messageWrapper);
+                messageDiv.appendChild(sourcesWrapper);
+            } else {
+                // Regular message without sources (including "not_related" mode)
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = text;
+
+                messageDiv.appendChild(contentDiv);
+
+                // Add mode badge if available and no sources
+                if (data && data.mode && (!data.sources || data.sources.length === 0)) {
+                    const modeDiv = document.createElement('div');
+                    modeDiv.className = `mode-badge mode-${data.mode}`;
+                    
+                    // Format mode text nicely
+                    const modeText = data.mode
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    
+                    modeDiv.textContent = `${modeText} MODE`;
+                    messageDiv.appendChild(modeDiv);
+                }
+            }
+
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showLoading() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.id = 'loading-message';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content loading';
+            contentDiv.innerHTML = `
+                <span>Thinking</span>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            `;
+
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            return 'loading-message';
+        }
+
+        function removeMessage(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.remove();
+            }
+        }
+    </script>
+</body>
+</html>
