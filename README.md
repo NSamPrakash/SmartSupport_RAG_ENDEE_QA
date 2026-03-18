@@ -463,7 +463,4 @@ python app.py
 ##  Documentation
 
 - **[DOCUMENT_UPLOAD_GUIDE.md](DOCUMENT_UPLOAD_GUIDE.md)** — Complete guide for uploading custom documents
-   
-## 📄 License
 
-MIT — see [LICENSE](LICENSE)
