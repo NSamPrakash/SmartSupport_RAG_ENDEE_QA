@@ -463,8 +463,7 @@ python app.py
 ##  Documentation
 
 - **[DOCUMENT_UPLOAD_GUIDE.md](DOCUMENT_UPLOAD_GUIDE.md)** — Complete guide for uploading custom documents
-- **[SCREEN_RECORDING_SPEECH.md](SCREEN_RECORDING_SPEECH.md)** — Full presentation script with timing
-
+- 
 ## 📄 License
 
 MIT — see [LICENSE](LICENSE)
