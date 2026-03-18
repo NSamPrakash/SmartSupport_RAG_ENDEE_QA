@@ -1,10 +1,11 @@
 # SmartSupport — RAG-Powered Support Q&A System
 
-> **Retrieval-Augmented Generation (RAG) using the [Endee](https://github.com/endee-io/endee) vector database**
+> **Retrieval-Augmented Generation (RAG) using the [Endee](https://github.com/endee-io/endee) vector database and Google Gemini LLM**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![Endee](https://img.shields.io/badge/Vector%20DB-Endee-orange)](https://endee.io)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-green?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Gemini](https://img.shields.io/badge/LLM-Google%20Gemini-blue?logo=google)](https://ai.google/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 ---
@@ -15,12 +16,13 @@
 - [System Design](#-system-design)
 - [How Endee Is Used](#-how-endee-is-used)
 - [Project Structure](#-project-structure)
-- [Setup and Installation](#-setup-and-installation)
-- [Running the Application](#-running-the-application)
+- [Quick Start](#-quick-start)
+- [Usage & Workflow](#-usage--workflow)
+- [Web Interface](#-web-interface)
 - [API Reference](#-api-reference)
-- [Running Tests](#-running-tests)
 - [Configuration](#-configuration)
 - [Example Walkthrough](#-example-walkthrough)
+- [Documentation](#-documentation)
 
 ---
 
@@ -77,7 +79,7 @@ Traditional keyword search fails to capture *semantic meaning* — a query for "
 | Similarity metric | Cosine | Normalised embeddings → cosine = dot product; direction > magnitude |
 | Precision | INT8 | Endee INT8 quantisation gives ~4× memory savings with negligible accuracy loss |
 | Chunk size | 512 chars / 64 overlap | Preserves sentence context; overlap prevents boundary misses |
-| LLM | GPT-4o-mini (optional) | Low cost, strong instruction following; fallback to extractive mode |
+| LLM | Google Gemini (optional) | Cost-effective, powerful instruction following; fallback to extractive mode |
 
 ---
 
@@ -142,134 +144,150 @@ results = index.query(vector=query_vector, top_k=5)
 ## Project Structure
 
 ```
-SmartSupport_RAG_Endee_QA/
-├── app.py                   # FastAPI REST API server
-├── demo.py                  # CLI demo (no server required)
+SmartSupport_RAG_ENDEE_QA/
+├── app.py                           # FastAPI REST API server
+├── chat.html                        # Web interface for Q&A
+├── build_knowledge_base.py          # CLI tool for uploading custom documents
+├── demo.py                          # Demo with sample ML documents
 ├── requirements.txt
 ├── Dockerfile
-├── docker-compose.yml       # Runs Endee + SmartSupport together
+├── docker-compose.yml               # Runs Endee + API
+├── SCREEN_RECORDING_SPEECH.md       # Complete presentation script
+├── DOCUMENT_UPLOAD_GUIDE.md         # User guide for document uploads
+├── README.md                        # This file
 ├── src/
 │   ├── __init__.py
-│   ├── rag_engine.py        # Core: chunking, embedding, Endee upsert/search
-│   └── qa_pipeline.py       # QA: context building + LLM generation
-└── tests/
-    └── test_smartsupport.py # Unit tests (chunking, ingestion, search, QA)
+│   ├── rag_engine.py                # Core: chunking, embedding, Endee search
+│   └── qa_pipeline.py               # QA: Gemini LLM + context building
+├── tests/
+│   └── test_documind.py             # Unit tests
+├── endee/                           # Endee vector database (git submodule)
+├── __pycache__/
+└── .env                             # Configuration (API keys, hosts)
 ```
 
 ---
 
-##  Setup and Installation
+##  Quick Start
 
 ### Prerequisites
 
 - Python 3.11+
-- Docker + Docker Compose (for Endee)
-- (Optional) OpenAI API key for generative answers
+- Docker + Docker Compose
+- Google Gemini API key (optional, for generative mode)
 
-### Step 1 — Fork & Clone
-
-> **Required by evaluation rules:** Star and fork the [Endee repository](https://github.com/endee-io/endee) before proceeding.
+### 1. Clone & Setup
 
 ```bash
-# After forking on GitHub:
-git clone https://github.com/<your-username>/endee
-cd endee
+git clone https://github.com/NSamPrakash/SmartSupport_RAG_ENDEE_QA.git
+cd SmartSupport_RAG_ENDEE_QA
 
-# Then clone SmartSupport alongside it
-git clone https://github.com/<your-username>/smartsupport
-cd smartsupport
-```
-
-### Step 2 — Start Endee
-
-```bash
-docker compose up endee -d
-# Endee is now running at http://localhost:8080
-```
-
-Verify:
-```bash
-curl http://localhost:8080/api/v1/index/list
-# → {"indexes": []}
-```
-
-### Step 3 — Install Python Dependencies
-
-```bash
-python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Step 4 — Configure Environment (Optional)
+### 2. Start Endee Vector Database
 
 ```bash
-cp .env.example .env
-# Edit .env:
-#   OPENAI_API_KEY=sk-...    ← enables generative mode
-#   OPENAI_MODEL=gpt-4o-mini
-#   ENDEE_HOST=http://localhost:8080
+docker-compose up -d
+# Endee runs on http://localhost:8080
+```
+
+### 3. (Optional) Configure Gemini API
+
+```bash
+# Create .env file with your Gemini API key
+echo GEMINI_API_KEY=your_api_key_here >> .env
+echo GEMINI_MODEL=gemini-2.5-flash >> .env
+```
+
+Without an API key, the system runs in **extractive mode** (still works great!).
+
+### 4. Choose Your Workflow
+
+**Option A: Upload Sample Documents (Demo)**
+```bash
+python demo.py
+# Ingests 3 sample ML documents and shows Q&A examples
+```
+
+**Option B: Upload Your Own Documents**
+```bash
+python build_knowledge_base.py
+# Interactive menu to upload your custom documents
+# See DOCUMENT_UPLOAD_GUIDE.md for detailed instructions
+```
+
+**Option C: Start the Web Server**
+```bash
+python app.py
+# Open http://localhost:8000 in your browser
+# Use chat.html interface to upload documents and ask questions
 ```
 
 ---
 
-##  Running the Application
+##  Usage & Workflow
 
-### Option A — CLI Demo (Quickest)
+### Workflow 1: Web Interface (Easiest for Non-Technical Users)
 
-No server needed. Ingests 3 sample documents and runs Q&A:
+```
+1. Open http://localhost:8000 in browser
+2. Upload .txt documents through the web form
+3. Ask questions in the chat interface
+4. Get instant answers with source citations
+```
+
+### Workflow 2: Command-Line (Batch Processing)
 
 ```bash
-python demo.py
+# Upload multiple documents from a folder
+python build_knowledge_base.py --folder ./my_documents
 
-# Ask a custom question:
-python demo.py --question "What are the benefits of renewable energy?"
+# Ask questions programmatically
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the main topic?", "top_k": 5}'
 ```
 
-Sample output:
-```
-════════════════════════════════════════════════════════════
-  SmartSupport — RAG Demo (powered by Endee Vector DB)
-════════════════════════════════════════════════════════════
+### Workflow 3: Python API (Programmatic)
 
-[1/3] Initialising RAG engine …
-[2/3] Ingesting sample documents …
-  ✓ climate_change.txt   (4 chunks, doc_id=a1b2c3d4e5f6)
-  ✓ machine_learning.txt (4 chunks, doc_id=f6e5d4c3b2a1)
-  ✓ space_exploration.txt (4 chunks, doc_id=123456789abc)
+```python
+from src.rag_engine import RAGEngine
+from src.qa_pipeline import QAPipeline
 
-[3/3] Running 5 Q&A queries …
+# Initialize
+rag = RAGEngine()
+qa = QAPipeline(rag_engine=rag)
 
-────────────────────────────────────────────────────────────
-Q: What caused climate change?
-A: Climate change has been primarily driven by human activities since the 1800s,
-   especially the burning of fossil fuels such as coal, oil, and gas, which
-   release heat-trapping gases. [Source: climate_change.txt]
-Mode: extractive
-Sources:
-  • climate_change.txt  (sim=0.9732)  Climate change refers to long-term shifts…
+# Ingest documents
+with open("document.txt") as f:
+    rag.ingest_text(f.read(), filename="document.txt")
+
+# Ask questions
+result = qa.ask("What is this document about?")
+print(result["answer"])
+print(result["sources"])
+print(result["mode"])  # 'generative' or 'extractive'
 ```
 
-### Option B — REST API Server
+---
 
-```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
-```
+##  Web Interface
 
-API docs available at: **http://localhost:8000/docs**
+The `chat.html` file provides a beautiful, user-friendly interface:
 
-### Option C — Full Docker Stack
+**Features:**
+- 📤 Drag-and-drop document upload
+- 💬 Chat-like Q&A interface
+- 🔗 Source citations with similarity scores
+- 🎯 Document management
+- 🌙 Dark/light theme support
 
-```bash
-# Set your OpenAI key (optional)
-export OPENAI_API_KEY=sk-...
-
-docker compose up --build
-```
-
-Both services start:
-- Endee: `http://localhost:8080`
-- SmartSupport API: `http://localhost:8000`
+**Access:**
+- Run the API: `python app.py`
+- Open: `http://localhost:8000` in your browser
 
 ---
 
@@ -371,9 +389,16 @@ All tests use mocks for Endee and the embedding model — no live server require
 | Environment Variable | Default | Description |
 |---|---|---|
 | `ENDEE_HOST` | `http://localhost:8080` | Endee server URL |
-| `ENDEE_AUTH_TOKEN` | `""` | Endee auth token (leave blank for open mode) |
-| `OPENAI_API_KEY` | `""` | OpenAI key (enables generative mode) |
-| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model to use |
+| `ENDEE_AUTH_TOKEN` | `""` | Endee auth token (leave blank for no auth) |
+| `GEMINI_API_KEY` | `""` | Google Gemini API key (enables generative mode) |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model to use |
+
+**Example .env file:**
+```
+ENDEE_HOST=http://localhost:8080
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+```
 
 ---
 
@@ -381,56 +406,64 @@ All tests use mocks for Endee and the embedding model — no live server require
 
 ## 🔄 Example Walkthrough
 
+### Using the Python API
+
 ```python
 from src.rag_engine import RAGEngine
 from src.qa_pipeline import QAPipeline
 
-# 1. Start Endee (docker compose up endee -d)
+# 1. Start Endee: docker-compose up -d
 
-# 2. Initialise
-rag = RAGEngine()   # connects to Endee, creates index if needed
-qa  = QAPipeline(rag_engine=rag)
+# 2. Initialize RAG engine and QA pipeline
+rag = RAGEngine()
+qa = QAPipeline(rag_engine=rag)
 
 # 3. Ingest a document
-with open("my_report.txt") as f:
-    rag.ingest_text(f.read(), filename="my_report.txt")
+result = rag.ingest_text(
+    text="Machine Learning is a subset of AI that enables systems to learn from data...",
+    filename="ml_guide.txt"
+)
+print(f"Ingested: {result['num_chunks']} chunks")
+# Output: Ingested: 2 chunks
 
 # 4. Ask questions
-result = qa.ask("What were the main findings?")
-print(result["answer"])
-# → "The main findings indicate that… [Source: my_report.txt]"
+answer = qa.ask("What is Machine Learning?")
+print(answer["answer"])
+# Output: Machine Learning is a subset of AI that enables systems to learn...
+print(answer["mode"])
+# Output: generative (if Gemini API key is set) or extractive
+print(answer["sources"][0])
+# Output: {filename: ml_guide.txt, similarity: 0.98, ...}
+```
 
+### Using the Command-Line Tool
 
----
+```bash
+# Build knowledge base from custom documents
+python build_knowledge_base.py
 
-##  Evaluation Compliance
+# OR upload all docs from a folder
+python build_knowledge_base.py --folder ./my_documents
 
-This project strictly follows the mandatory evaluation guidelines:
+# OR upload specific files
+python build_knowledge_base.py --file doc1.txt --file doc2.txt
+```
 
-- ⭐ Starred the official Endee repository:  
-  https://github.com/endee-io/endee
+### Using the Web Interface
 
-- 🍴 Forked the Endee repository to my personal GitHub account:  
-  https://github.com/vishalkumar-swe/endee
-
--  Implemented a complete RAG (Retrieval-Augmented Generation) system using Endee as the core vector database.
-
-- Hosted the full project publicly on GitHub with complete setup and execution instructions.
-
-All required steps for the project-based evaluation have been completed.
-<img width="1915" height="958" alt="image" src="https://github.com/user-attachments/assets/37b4d77a-1622-43f0-ad06-d7095689277c" />
-
+```bash
+# Start the API server
+python app.py
+# Open http://localhost:8000 in your browser
+# Upload documents and ask questions through chat.html
 ```
 
 ---
 
-##  Clone the Repository
+##  Documentation
 
-Clone this project to your local machine:
-
-```bash
-git clone https://github.com/vishalkumar-swe/smartsupport-rag-endee.git
-cd SmartSupport_RAG_Endee_QA
+- **[DOCUMENT_UPLOAD_GUIDE.md](DOCUMENT_UPLOAD_GUIDE.md)** — Complete guide for uploading custom documents
+- **[SCREEN_RECORDING_SPEECH.md](SCREEN_RECORDING_SPEECH.md)** — Full presentation script with timing
 
 ## 📄 License
 
