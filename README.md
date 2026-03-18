@@ -455,6 +455,7 @@ python build_knowledge_base.py --file doc1.txt --file doc2.txt
 python app.py
 # Open http://localhost:8000 in your browser
 # Upload documents and ask questions through chat.html
+# To run the UI, just copy paste the path of chat.html and also can host it
 ```
 
 ---
