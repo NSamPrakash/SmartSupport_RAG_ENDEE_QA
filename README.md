@@ -63,7 +63,7 @@ Traditional keyword search fails to capture *semantic meaning* — a query for "
 │       │                                                       │
 │       ▼                                                       │
 │  ┌──────────────┐    ┌────────────┐    ┌──────────────────┐  │
-│  │  Embedding   │    │   Endee    │    │   LLM (GPT-4o)   │  │
+│  │  Embedding   │    │   Endee    │    │   LLM (Gemini)   │  │
 │  │  Model       │───▶│  ANN Search│───▶│  + Context       │  │
 │  │  (same model │    │  top-k=5   │    │  → Grounded      │  │
 │  │   as ingest) │    │  chunks    │    │    Answer        │  │
@@ -152,7 +152,6 @@ SmartSupport_RAG_ENDEE_QA/
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml               # Runs Endee + API
-├── SCREEN_RECORDING_SPEECH.md       # Complete presentation script
 ├── DOCUMENT_UPLOAD_GUIDE.md         # User guide for document uploads
 ├── README.md                        # This file
 ├── src/
